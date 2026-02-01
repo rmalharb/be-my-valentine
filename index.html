@@ -1,0 +1,94 @@
+<script>
+  const card = document.getElementById('card');
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn  = document.getElementById('noBtn');
+  const yay    = document.getElementById('yay');
+  const confetti = document.getElementById('confetti');
+
+  let noIsFloating = false;
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function randomPositionForNo() {
+    const pad = 20;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = noBtn.getBoundingClientRect();
+    const bw = rect.width || 120;
+    const bh = rect.height || 48;
+
+    const x = Math.random() * (vw - bw - pad * 2) + pad;
+    const y = Math.random() * (vh - bh - pad * 2) + pad;
+
+    return {
+      left: clamp(x, pad, vw - bw - pad),
+      top:  clamp(y, pad, vh - bh - pad)
+    };
+  }
+
+  function flee() {
+    if (!noIsFloating) {
+      noIsFloating = true;
+      noBtn.style.position = 'fixed';
+      noBtn.style.zIndex = 9999;
+    }
+    const { left, top } = randomPositionForNo();
+    noBtn.style.left = left + 'px';
+    noBtn.style.top  = top  + 'px';
+  }
+
+  // 🏃‍♂️ Desktop: run away when the mouse gets CLOSE
+  document.addEventListener('mousemove', (e) => {
+    const rect = noBtn.getBoundingClientRect();
+    const buffer = 80; // how close is "too close"
+
+    const near =
+      e.clientX > rect.left - buffer &&
+      e.clientX < rect.right + buffer &&
+      e.clientY > rect.top - buffer &&
+      e.clientY < rect.bottom + buffer;
+
+    if (near) flee();
+  });
+
+  // 📱 Mobile: run away as soon as finger approaches
+  document.addEventListener('touchstart', flee, { passive: true });
+  document.addEventListener('touchmove', flee, { passive: true });
+
+  // Just in case…
+  noBtn.addEventListener('mouseenter', flee);
+  noBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    flee();
+  });
+
+  function popHearts(count = 16) {
+    const emojis = ['💗','💖','💘','💕','💞','💓'];
+    const rect = card.getBoundingClientRect();
+
+    for (let i = 0; i < count; i++) {
+      const h = document.createElement('span');
+      h.className = 'heart';
+      h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      h.style.left = Math.random() * rect.width + 'px';
+      h.style.top = rect.height - 10 + 'px';
+      h.style.animationDelay = Math.random() * 200 + 'ms';
+      confetti.appendChild(h);
+      h.addEventListener('animationend', () => h.remove());
+    }
+  }
+
+  yesBtn.addEventListener('click', () => {
+    yay.style.display = 'block';
+    popHearts(20);
+    yesBtn.disabled = true;
+    noBtn.disabled = true;
+    noBtn.style.pointerEvents = 'none';
+  });
+
+  window.addEventListener('resize', () => {
+    if (noIsFloating) flee();
+  });
+</script>
